@@ -252,6 +252,8 @@ class Swiper extends Component {
     //     this.initState({ ...this.props, index: this.state.index }, true)
     //   )
     // }
+
+    this.internals.isScrolling = false
   }
 
   static initState(nextProps, prevState, updateIndex = false) {
@@ -305,10 +307,12 @@ class Swiper extends Component {
     initState.offset[initState.dir] =
       initState.dir === 'y' ? height * nextProps.index : width * nextProps.index
 
+    /*
     this.internals = {
       ...this.internals,
       isScrolling: false
     }
+    */
     return initState
   }
 
