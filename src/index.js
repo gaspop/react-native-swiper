@@ -196,6 +196,10 @@ class Swiper extends Component {
   autoplayTimer = null
   loopJumpTimer = null
 
+  internals = {
+    isScrolling: false,
+  }
+
   static getDerivedStateFromProps(props, state) {
     if (props.index === state.prevIndex) return
     this.setState(
