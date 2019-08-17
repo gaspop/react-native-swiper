@@ -96,7 +96,7 @@ const styles = {
 
 // missing `module.exports = exports['default'];` with babel6
 // export default React.createClass({
-export default class extends Component {
+class Swiper extends Component {
   /**
    * Props Validation
    * @type {Object}
@@ -181,7 +181,7 @@ export default class extends Component {
    * Init states
    * @return {object} states
    */
-  state = this.initState(this.props)
+  state = Swiper.initState(this.props)
 
   /**
    * Initial render flag
@@ -196,14 +196,28 @@ export default class extends Component {
   autoplayTimer = null
   loopJumpTimer = null
 
-  componentWillReceiveProps(nextProps) {
-    if (!nextProps.autoplay && this.autoplayTimer)
-      clearTimeout(this.autoplayTimer)
-    if (nextProps.index === this.props.index) return
+  static getDerivedStateFromProps(props, state) {
+    if (props.index === state.prevIndex) return
     this.setState(
-      this.initState(nextProps, this.props.index !== nextProps.index)
+      Swiper.initState(
+        {
+          ...props,
+          ...(props.children !== state.children ? { index: state.index } : {} ),
+        },
+        state,
+        props.index !== state.prevIndex
+      )
     )
   }
+
+  // componentWillReceiveProps(nextProps) {
+  //   // if (!nextProps.autoplay && this.autoplayTimer)
+  //   //   clearTimeout(this.autoplayTimer)
+  //   if (nextProps.index === this.props.index) return
+  //   this.setState(
+  //     this.initState(nextProps, this.props.index !== nextProps.index)
+  //   )
+  // }
 
   componentDidMount() {
     this.autoplay()
@@ -214,39 +228,48 @@ export default class extends Component {
     this.loopJumpTimer && clearTimeout(this.loopJumpTimer)
   }
 
-  componentWillUpdate(nextProps, nextState) {
-    // If the index has changed, we notify the parent via the onIndexChanged callback
-    if (this.state.index !== nextState.index)
-      this.props.onIndexChanged(nextState.index)
-  }
+  // componentWillUpdate(nextProps, nextState) {
+  //   // If the index has changed, we notify the parent via the onIndexChanged callback
+  //   if (this.state.index !== nextState.index)
+  //     this.props.onIndexChanged(nextState.index)
+  // }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.index !== prevState.index) {
+      this.props.onIndexChanged(this.state.index)
+    }
+
+    if (!this.props.autoplay && this.autoplayTimer) {
+      clearTimeout(this.autoplayTimer)
+    }
+
     // If autoplay props updated to true, autoplay immediately
     if (this.props.autoplay && !prevProps.autoplay) {
       this.autoplay()
     }
-    if (this.props.children !== prevProps.children) {
-      this.setState(
-        this.initState({ ...this.props, index: this.state.index }, true)
-      )
-    }
+    // if (this.props.children !== prevProps.children) {
+    //   this.setState(
+    //     this.initState({ ...this.props, index: this.state.index }, true)
+    //   )
+    // }
   }
 
-  initState(props, updateIndex = false) {
+  static initState(nextProps, prevState, updateIndex = false) {
     // set the current state
-    const state = this.state || { width: 0, height: 0, offset: { x: 0, y: 0 } }
+    const state = prevState || { width: 0, height: 0, offset: { x: 0, y: 0 } }
 
     const initState = {
       autoplayEnd: false,
       children: null,
       loopJump: false,
-      offset: {}
+      offset: {},
+      prevIndex: nextProps.index,
     }
 
     // Support Optional render page
-    initState.children = Array.isArray(props.children)
-      ? props.children.filter(child => child)
-      : props.children
+    initState.children = Array.isArray(nextProps.children)
+      ? nextProps.children.filter(child => child)
+      : nextProps.children
 
     initState.total = initState.children ? initState.children.length || 1 : 0
 
@@ -255,24 +278,24 @@ export default class extends Component {
       initState.index = state.index
     } else {
       initState.index =
-        initState.total > 1 ? Math.min(props.index, initState.total - 1) : 0
+        initState.total > 1 ? Math.min(nextProps.index, initState.total - 1) : 0
     }
 
     // Default: horizontal
     const { width, height } = Dimensions.get('window')
 
-    initState.dir = props.horizontal === false ? 'y' : 'x'
+    initState.dir = nextProps.horizontal === false ? 'y' : 'x'
 
-    if (props.width) {
-      initState.width = props.width
+    if (nextProps.width) {
+      initState.width = nextProps.width
     } else if (this.state && this.state.width) {
       initState.width = this.state.width
     } else {
       initState.width = width
     }
 
-    if (props.height) {
-      initState.height = props.height
+    if (nextProps.height) {
+      initState.height = nextProps.height
     } else if (this.state && this.state.height) {
       initState.height = this.state.height
     } else {
@@ -280,7 +303,7 @@ export default class extends Component {
     }
 
     initState.offset[initState.dir] =
-      initState.dir === 'y' ? height * props.index : width * props.index
+      initState.dir === 'y' ? height * nextProps.index : width * nextProps.index
 
     this.internals = {
       ...this.internals,
@@ -443,27 +466,27 @@ export default class extends Component {
         if (this.state.index === 0) {
           this.props.horizontal
             ? this.scrollView.scrollTo({
-                x: state.width,
-                y: 0,
-                animated: false
-              })
+              x: state.width,
+              y: 0,
+              animated: false
+            })
             : this.scrollView.scrollTo({
-                x: 0,
-                y: state.height,
-                animated: false
-              })
+              x: 0,
+              y: state.height,
+              animated: false
+            })
         } else if (this.state.index === this.state.total - 1) {
           this.props.horizontal
             ? this.scrollView.scrollTo({
-                x: state.width * this.state.total,
-                y: 0,
-                animated: false
-              })
+              x: state.width * this.state.total,
+              y: 0,
+              animated: false
+            })
             : this.scrollView.scrollTo({
-                x: 0,
-                y: state.height * this.state.total,
-                animated: false
-              })
+              x: 0,
+              y: state.height * this.state.total,
+              animated: false
+            })
         }
       }
     }
@@ -876,3 +899,5 @@ export default class extends Component {
     )
   }
 }
+
+ export default Swiper
