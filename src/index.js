@@ -201,16 +201,15 @@ class Swiper extends Component {
   }
 
   static getDerivedStateFromProps(props, state) {
-    if (props.index === state.prevIndex) return
-    this.setState(
-      Swiper.initState(
-        {
-          ...props,
-          ...(props.children !== state.children ? { index: state.index } : {} ),
-        },
-        state,
-        props.index !== state.prevIndex
-      )
+    if (props.index === state.prevIndex) return null
+
+    return Swiper.initState(
+      {
+        ...props,
+        ...(props.children !== state.children ? { index: state.index } : {} ),
+      },
+      state,
+      props.index !== state.prevIndex
     )
   }
 
